@@ -1,16 +1,15 @@
 package com.jon;
 
 import java.util.Scanner;
-
+//java -jar C:\projects\JavaPrac\Minesweeper\out\artifacts\Minesweeper_jar\Minesweeper.jar
 public class Minesweeper {
 
-    static Scanner scanner = new Scanner(System.in);
-    private static int coords[];
-
+    private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         boolean playerAlive = true;
         int move;   //move selection from user to explore cell or mark as flag
+        int[] coords;
 
         //initialize empty gameBoard and display
         Board gameBoard = new Board();
@@ -36,8 +35,9 @@ public class Minesweeper {
             }
 
             //if all bombs have been successfully flagged, end game and print winning message
-            if(gameBoard.getSetBombs() == gameBoard.getNumBombs()){
-                System.out.println("You've set all the bombs, congratulations!");
+            //getFlaggedBombs gets the number of correctly flagged bombs
+            if(gameBoard.getFlaggedBombs() == gameBoard.getNumBombs()){
+                System.out.println("You've detected all the bombs, congratulations!");
                 playerAlive = false;
             }
         }
@@ -51,14 +51,13 @@ public class Minesweeper {
         System.out.println("1. Enter move.");
         System.out.println("2. Flag a cell.");
         selection = scanner.nextInt();
+
         return selection;
     }
 
 
-    //get player move coordinates
     private static int[] getCoordinates(){
         int[] coords = new int[2];
-
         coords[0] = scanner.nextInt();
         coords[1] = scanner.nextInt();
 

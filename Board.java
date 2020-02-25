@@ -1,22 +1,20 @@
 package com.jon;
 
-import org.jetbrains.annotations.NotNull;
+class Board {
 
-public class Board {
-
-    private int row = 10; //may set this to a user prompt
-    private int col = 10; //may set this to a user prompt
-    private int numBombs = 2;
-    private int setBombs = 0;
+    private int row = 10;
+    private int col = 10;
+    private int numBombs = 2;       //number of bombs to set on board
+    private int flaggedBombs = 0;   //number of bombs correctly flagged by user
     private int max = row - 1;
     private int min = 0;
     private Cell[][] gameBoard = new Cell[row][col];
-    boolean firstcoords = true;
+    private boolean firstCoords = true; //flag used in users first move to trigger bomb allocation
 
     /******************************************************************************
-
+     Initialize board with all cells having value '-' and adjacentBombs '0'
      ******************************************************************************/
-    public Board() {
+    Board() {
         //create board
         for (int i = 0; i < row; i++) {
             for (int j = 0; j < col; j++) {
@@ -26,18 +24,30 @@ public class Board {
     }
 
     /******************************************************************************
+     boolean userMove(int[] coords)
+     Input:
+        move coordinates [row, col]
+     Returns:
+        boolean. true = user still alive, false = user selected bomb
+     Description:
+         For initial move, the coordinate is marked explored, then bombs
+         are assigned and adjacent bomb count calculated. If the first move had 0
+         adjacent bombs, the surrounding cells are recursively auto expanded to show bomb
+         count.
 
+         Subsequent moves are tested to determine if cell is a bomb (game over), if cell
+         has 0 adjacent bombs the selection is recursively auto expanded to show bomb count,
+         if cell had an adjacent bomb the bomb count is displayed (no recursive auto expand).
      ******************************************************************************/
-    public boolean userMove(int[] coords){
-
-        if(firstcoords){
+    boolean userMove(int[] coords){
+        //first move, bombs and adjacent bomb count assigned to board cells
+        if(firstCoords){
             gameBoard[coords[0]][coords[1]].setExplored(true);
             assignBombs(coords);
-            firstcoords = false;
+            firstCoords = false;
             gameBoard[coords[0]][coords[1]].setValue(gameBoard[coords[0]][coords[1]].getAdjacentBombs());
 
             if(gameBoard[coords[0]][coords[1]].getValue() == '0') {
-                System.out.println("first move coordinates selected have 0 adjacent bombs");
                 autoExpandSelection(coords);
             }
             printGameBoard();
@@ -57,14 +67,14 @@ public class Board {
             System.out.println("Oh no, that was a bomb! Game Over :(");
             return false;
         }
+        //selection has 0 adjacent bombs, recursively auto expand
         else if(gameBoard[coords[0]][coords[1]].getAdjacentBombs() == '0'){
-            System.out.println("coordinates selected have 0 adjacent bombs");
             autoExpandSelection(coords);
             printGameBoard();
             return true;
         }
+        //selection had one or more adjacent bombs, display adjacent bombs only
         else {
-            System.out.println("coordinates selected have atleast 1 adjacent bomb");
             gameBoard[coords[0]][coords[1]].setExplored(true);
             gameBoard[coords[0]][coords[1]].setValue(gameBoard[coords[0]][coords[1]].getAdjacentBombs());
             printGameBoard();
@@ -74,18 +84,27 @@ public class Board {
 
 
     /******************************************************************************
-
+     private void autoExpandSelection(int[] coords)
+     Input:
+        move coordinates [row, col]
+     Description:
+        If a cell has 0 adjacent bombs the user's selection should be auto expanded
+        to display surrounding cell adjacentBomb counts. For each adjacent cell that
+        has a 0 adjacentBomb count, recursively expand in all 8 directions.
      ******************************************************************************/
-    public void autoExpandSelection(int[] coords){
+    private void autoExpandSelection(int[] coords){
+        //set the initial selection to explored and update value to show adjacentBomb count
         gameBoard[coords[0]][coords[1]].setExplored(true);
         gameBoard[coords[0]][coords[1]].setValue(gameBoard[coords[0]][coords[1]].getAdjacentBombs());
 
         if(gameBoard[coords[0]][coords[1]].getValue() == '0'){
             //recursive calls with try/catch through all 8 adjacent cell possibilities
-            //upper right
+            //upper left
             try {
-                gameBoard[coords[0] - 1][coords[1] - 1].setExplored(true);
-                gameBoard[coords[0] - 1][coords[1] - 1].setValue(gameBoard[coords[0] - 1][coords[1] - 1].getAdjacentBombs());
+                if(!gameBoard[coords[0] - 1][coords[1] - 1].isExplored()) {
+                    gameBoard[coords[0] - 1][coords[1] - 1].setExplored(true);
+                    gameBoard[coords[0] - 1][coords[1] - 1].setValue(gameBoard[coords[0] - 1][coords[1] - 1].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -101,8 +120,10 @@ public class Board {
             }
             //upper middle
             try{
-                gameBoard[coords[0] - 1][coords[1]].setExplored(true);
-                gameBoard[coords[0] - 1][coords[1]].setValue(gameBoard[coords[0] - 1][coords[1]].getAdjacentBombs());
+                if(!gameBoard[coords[0] - 1][coords[1]].isExplored()) {
+                    gameBoard[coords[0] - 1][coords[1]].setExplored(true);
+                    gameBoard[coords[0] - 1][coords[1]].setValue(gameBoard[coords[0] - 1][coords[1]].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -118,8 +139,10 @@ public class Board {
             }
             //upper right
             try{
-                gameBoard[coords[0] - 1][coords[1] + 1].setExplored(true);
-                gameBoard[coords[0] - 1][coords[1] + 1].setValue(gameBoard[coords[0] - 1][coords[1] + 1].getAdjacentBombs());
+                if(!gameBoard[coords[0] - 1][coords[1] + 1].isExplored()) {
+                    gameBoard[coords[0] - 1][coords[1] + 1].setExplored(true);
+                    gameBoard[coords[0] - 1][coords[1] + 1].setValue(gameBoard[coords[0] - 1][coords[1] + 1].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -135,8 +158,10 @@ public class Board {
             }
             //left
             try{
-                gameBoard[coords[0]][coords[1] - 1].setExplored(true);
-                gameBoard[coords[0]][coords[1] - 1].setValue(gameBoard[coords[0]][coords[1] - 1].getAdjacentBombs());
+                if(!gameBoard[coords[0]][coords[1] - 1].isExplored()) {
+                    gameBoard[coords[0]][coords[1] - 1].setExplored(true);
+                    gameBoard[coords[0]][coords[1] - 1].setValue(gameBoard[coords[0]][coords[1] - 1].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -151,10 +176,12 @@ public class Board {
                 //this is not a valid element so do nothing
             }
             //right **************************************************************
-            //causing overflow******************************************************************
+            //causing overflow below this point***************************************************************
             try{
-                gameBoard[coords[0]][coords[1] + 1].setExplored(true);
-                gameBoard[coords[0]][coords[1] + 1].setValue(gameBoard[coords[0]][coords[1] + 1].getAdjacentBombs());
+                if(!gameBoard[coords[0]][coords[1] + 1].isExplored()) {
+                    gameBoard[coords[0]][coords[1] + 1].setExplored(true);
+                    gameBoard[coords[0]][coords[1] + 1].setValue(gameBoard[coords[0]][coords[1] + 1].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -170,8 +197,10 @@ public class Board {
 //            }
             //lower left
             try {
-                gameBoard[coords[0] + 1][coords[1] - 1].setExplored(true);
-                gameBoard[coords[0] + 1][coords[1] - 1].setValue(gameBoard[coords[0] + 1][coords[1] - 1].getAdjacentBombs());
+                if(!gameBoard[coords[0] + 1][coords[1] - 1].isExplored()) {
+                    gameBoard[coords[0] + 1][coords[1] - 1].setExplored(true);
+                    gameBoard[coords[0] + 1][coords[1] - 1].setValue(gameBoard[coords[0] + 1][coords[1] - 1].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -187,8 +216,10 @@ public class Board {
 //            }
             //lower middle
             try{
-                gameBoard[coords[0] + 1][coords[1]].setExplored(true);
-                gameBoard[coords[0] + 1][coords[1]].setValue(gameBoard[coords[0] + 1][coords[1]].getAdjacentBombs());
+                if(!gameBoard[coords[0] + 1][coords[1]].isExplored()) {
+                    gameBoard[coords[0] + 1][coords[1]].setExplored(true);
+                    gameBoard[coords[0] + 1][coords[1]].setValue(gameBoard[coords[0] + 1][coords[1]].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -204,8 +235,10 @@ public class Board {
 //            }
             //lower right
             try{
-                gameBoard[coords[0] + 1][coords[1] + 1].setExplored(true);
-                gameBoard[coords[0] + 1][coords[1] + 1].setValue(gameBoard[coords[0] + 1][coords[1] + 1].getAdjacentBombs());
+                if(!gameBoard[coords[0] + 1][coords[1] + 1].isExplored()) {
+                    gameBoard[coords[0] + 1][coords[1] + 1].setExplored(true);
+                    gameBoard[coords[0] + 1][coords[1] + 1].setValue(gameBoard[coords[0] + 1][coords[1] + 1].getAdjacentBombs());
+                }
             }catch(ArrayIndexOutOfBoundsException e){
                 //this is not a valid element so do nothing
             }
@@ -223,15 +256,21 @@ public class Board {
     }
 
     /******************************************************************************
-
+     void userFlagMove(int[] coords)
+     Input:
+        move coordinates [row, col]
+     Description:
+        Processes flag move by user. Toggle isFlagged each time a cell is processed,
+        so if a flagged cell is selected a second time it will be unflagged. Update
+        flaggedBomb count.
      ******************************************************************************/
-    public void userFlagMove(int[] coords){
+    void userFlagMove(int[] coords){
         if(gameBoard[coords[0]][coords[1]].isFlagged()){
             gameBoard[coords[0]][coords[1]].setValue('-');
             gameBoard[coords[0]][coords[1]].setFlagged(false);
 
             if(gameBoard[coords[0]][coords[1]].isBomb()){
-                setBombs--;
+                flaggedBombs--;
             }
         }
         else {
@@ -239,7 +278,7 @@ public class Board {
             gameBoard[coords[0]][coords[1]].setFlagged(true);
 
             if(gameBoard[coords[0]][coords[1]].isBomb()){
-                setBombs++;
+                flaggedBombs++;
             }
         }
         printGameBoard();
@@ -247,9 +286,13 @@ public class Board {
 
 
     /******************************************************************************
-
+     private void assignBombs(int[] coords)
+     Input:
+        move coordinates [row, col]
+     Description:
+        Randomly assigns bombs and calculates adjacentBomb count for each cell.
      ******************************************************************************/
-    public void assignBombs(int[] coords){
+    private void assignBombs(int[] coords){
         //randomly assign bombs
         for (int i = 0; i < numBombs; i++) {
             boolean validCell = false;
@@ -257,28 +300,24 @@ public class Board {
                 int randRow = (int) (Math.random() * ((max - min) + 1));
                 int randCol = (int) (Math.random() * ((max - min) + 1));
                 if (!gameBoard[randRow][randCol].isBomb() && randRow != coords[0] && randCol != coords[1]) {
-//                    gameBoard[randRow][randCol].setValue('*'); //testing comment for random bomb placement
                     gameBoard[randRow][randCol].setBomb(true);
                     validCell = true;
-                    System.out.println("bomb coordinates: " + randRow + " " + randCol);
+//                    System.out.println("bomb coordinates: " + randRow + " " + randCol);
                 }
-//                System.out.println("counter and valid cell: " + i + " " + validCell);
-//                System.out.println("rand row col: " + randRow + " " + randCol);
-            } while (validCell == false);
+            } while (!validCell);
         }
 
-
-        //Add logic for perimeter cells
-        //count adjacent bombs
+        //Add logic testing perimeter cells to avoid array index issues
+        //count adjacent bombs and increment bombCount
         for (int i = 0; i < row; i++) {
             for (int j = 0; j < col; j++) {
                 int bombCount = 0;
                 char adjacentBombs;
 
                 //test for top row
-                if (i == 0) {
+                if (i == min) {
                     //upper left corner cell
-                    if (j == 0) {
+                    if (j == min) {
                         if (gameBoard[i][j + 1].isBomb()) {
                             bombCount++;
                         }
@@ -289,9 +328,8 @@ public class Board {
                             bombCount++;
                         }
                     }
-
                     //upper right corner cell
-                    if (j == 9) {
+                    if (j == max) {
                         if (gameBoard[i][j - 1].isBomb()) {
                             bombCount++;
                         }
@@ -303,7 +341,7 @@ public class Board {
                         }
                     }
                     //top middle cells
-                    if( j != 0 && j != 9){
+                    if( j != min && j != max){
                         if (gameBoard[i][j - 1].isBomb()) {
                             bombCount++;
                         }
@@ -321,11 +359,10 @@ public class Board {
                         }
                     }
                 }
-
                 //test for bottom row
-                if (i == 9) {
+                if (i == max) {
                     //bottom left corner cell
-                    if (j == 0) {
+                    if (j == min) {
                         if (gameBoard[i -1][j].isBomb()) {
                             bombCount++;
                         }
@@ -337,7 +374,7 @@ public class Board {
                         }
                     }
                     //bottom right corner cell
-                    if (j == 9) {
+                    if (j == max) {
                         if (gameBoard[i][j - 1].isBomb()) {
                             bombCount++;
                         }
@@ -349,7 +386,7 @@ public class Board {
                         }
                     }
                     //bottom middle cells
-                    if ( j != 0 && j != 9){
+                    if ( j != min && j != max){
                         if (gameBoard[i][j - 1].isBomb()) {
                             bombCount++;
                         }
@@ -367,9 +404,8 @@ public class Board {
                         }
                     }
                 }
-
                 //test for left side
-                if (j == 0 && i != 0 && i != 9) {
+                if (j == min && i != min && i != max) {
                     //bottom left corner cell
                     if (gameBoard[i - 1][j].isBomb()) {
                         bombCount++;
@@ -387,9 +423,8 @@ public class Board {
                         bombCount++;
                     }
                 }
-
                 //test for right side
-                if (j == 9 && i != 0 && i != 9) {
+                if (j == max && i != min && i != max) {
                     //bottom left corner cell
                     if (gameBoard[i - 1][j].isBomb()) {
                         bombCount++;
@@ -407,9 +442,8 @@ public class Board {
                         bombCount++;
                     }
                 }
-
                 //non-boarder cells (in the middle of the grid)
-                if(i != 0 && i != 9 && j != 0 && j != 9){
+                if(i != min && i != max && j != min && j != max){
                     if(gameBoard[i - 1][j - 1].isBomb()){
                     bombCount++;
                     }
@@ -435,19 +469,18 @@ public class Board {
                         bombCount++;
                     }
                 }
-
+                //assign bombCount to each cell's adjacentBomb var
                 adjacentBombs = (char)(bombCount + '0');
                 gameBoard[i][j].setAdjacentBombs(adjacentBombs);
-//                System.out.println("bomb count for " + i + " " + j + " " + gameBoard[i][j].getAdjacentBombs());
             }
         }
     }
 
 
-       /******************************************************************************
-
+    /******************************************************************************
+     Print game board
      ******************************************************************************/
-    public void printGameBoard(){
+       void printGameBoard(){
         System.out.print("    ");
         for(int r = 0; r < col; r++){
             System.out.print(r + "  ");
@@ -468,13 +501,11 @@ public class Board {
         }
     }
 
-    public int getNumBombs() {
+    int getNumBombs() {
         return numBombs;
     }
 
-    public int getSetBombs() {
-        return setBombs;
+    int getFlaggedBombs() {
+        return flaggedBombs;
     }
-
-
 }
